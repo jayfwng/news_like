@@ -154,6 +154,27 @@ class HelperTest(unittest.TestCase):
         s = "첫 문장입니다. " * 30
         self.assertLessEqual(len(crawl.shorten(s, 100)), 101)
 
+    def test_euckr_feed(self):
+        xml = (f'<?xml version="1.0" encoding="euc-kr"?><rss><channel><item><title>한글 제목 KBS 사장</title>'
+               f'<link>https://x/1</link><description>요약 글</description><pubDate>{rfc(1)}</pubDate></item>'
+               '</channel></rss>').encode("cp949")
+        items = crawl.parse_feed(crawl.decode(xml))
+        self.assertEqual(items[0]["title"], "한글 제목 KBS 사장")
+        self.assertEqual(items[0]["summary"], "요약 글")
+
+    def test_utf8_feed_declared_euckr(self):
+        # 선언은 euc-kr인데 실제는 UTF-8인 피드
+        xml = ('<?xml version="1.0" encoding="euc-kr"?><rss><channel><item><title>실제는 유니코드</title>'
+               '<link>https://x/1</link></item></channel></rss>').encode("utf-8")
+        self.assertEqual(crawl.parse_feed(crawl.decode(xml))[0]["title"], "실제는 유니코드")
+
+    def test_truncated_utf8(self):
+        data = "<html>한글 페이지".encode("utf-8")[:-1]
+        self.assertEqual(crawl.decode(data), "<html>한글 페이")
+
+    def test_charset_from_header(self):
+        self.assertEqual(crawl.decode("<p>헤더</p>".encode("cp949"), "EUC-KR"), "<p>헤더</p>")
+
     def test_decode_euckr(self):
         data = '<?xml version="1.0" encoding="euc-kr"?><a>한글</a>'.encode("cp949")
         self.assertIn("한글", crawl.decode(data))

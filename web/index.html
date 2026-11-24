@@ -6,11 +6,13 @@
   <title>뉴스스냅</title>
   <meta name="description" content="많이 보는 뉴스를 인스타그램처럼 넘겨 보고, 모르는 경제 용어는 바로 찾아보는 앱">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#101013" media="(prefers-color-scheme: dark)">
   <meta name="referrer" content="no-referrer">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -18,7 +20,7 @@
     <h1 class="logo">뉴스스냅</h1>
     <span class="updated" id="updated"></span>
     <button class="icon-btn" id="refresh" aria-label="새로고침" title="새로고침">
-      <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4.5h-4.5"/></svg>
     </button>
   </header>
 
@@ -51,10 +53,10 @@
 
   <nav class="tabbar" aria-label="메뉴">
     <button data-view="home" class="active" aria-label="홈">
-      <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg><span>홈</span>
+      <svg viewBox="0 0 24 24"><path d="M4 10.2 12 4l8 6.2V20h-5.5v-5.5h-5V20H4z"/></svg><span>홈</span>
     </button>
     <button data-view="saved" aria-label="저장">
-      <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span>저장</span>
+      <svg viewBox="0 0 24 24"><path d="M6.5 3.5h11v17l-5.5-3.8-5.5 3.8z"/></svg><span>저장</span>
     </button>
     <button data-view="words" aria-label="단어장">
       <svg viewBox="0 0 24 24"><path d="M4 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4zM20 4h-3a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h4z"/></svg><span>단어장</span>

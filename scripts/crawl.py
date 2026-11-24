@@ -126,19 +126,39 @@ def fetch(url: str, timeout: float = 15, limit: int | None = None) -> bytes:
                 data = gzip.decompress(data)
             except (OSError, EOFError):
                 pass
-        return data
+        body = Body(data)
+        body.charset = res.headers.get_content_charset()
+        return body
 
 
-def decode(data: bytes) -> str:
-    head = data[:300].decode("ascii", "ignore").lower()
-    m = re.search(r'encoding=["\']([\w-]+)', head) or re.search(r"charset=([\w-]+)", head)
-    enc = m.group(1) if m else "utf-8"
-    if enc in ("euc-kr", "ks_c_5601-1987"):
-        enc = "cp949"
+class Body(bytes):
+    """내려받은 내용 + 서버가 알려준 글자 인코딩."""
+
+    charset: str | None = None
+
+
+def decode(data: bytes, charset: str | None = None) -> str:
+    """바이트를 글자로. UTF-8을 먼저 시도하고, 아니면 선언된 인코딩, 그다음 CP949(EUC-KR)."""
+    charset = charset or getattr(data, "charset", None)
+    data = bytes(data)
     try:
-        return data.decode(enc)
-    except (LookupError, UnicodeDecodeError):
-        return data.decode("utf-8", "replace")
+        return data.decode("utf-8")
+    except UnicodeDecodeError as e:
+        # 앞부분만 읽어서 마지막 글자가 잘린 경우
+        if e.start >= len(data) - 3:
+            return data[: e.start].decode("utf-8", "ignore")
+    head = data[:1024].decode("ascii", "ignore").lower()
+    m = re.search(r'encoding=["\']([\w-]+)', head) or re.search(r"charset=[\"']?([\w-]+)", head)
+    candidates = [c for c in (charset, m.group(1) if m else None) if c] + ["cp949"]
+    for enc in candidates:
+        enc = enc.lower()
+        if enc in ("euc-kr", "euckr", "ks_c_5601-1987", "ksc5601", "x-windows-949"):
+            enc = "cp949"
+        try:
+            return data.decode(enc)
+        except (LookupError, UnicodeDecodeError):
+            continue
+    return data.decode("utf-8", "replace")
 
 
 # ---------------------------------------------------------------- 글자 정리
@@ -219,6 +239,8 @@ def find_image(el: ET.Element, raw_html: str) -> str | None:
 
 def parse_feed(xml_text: str) -> list[dict]:
     xml_text = re.sub(r"^[^<]+", "", xml_text)
+    # 이미 글자로 풀었으니, 원래 인코딩 선언(예: euc-kr)을 지워야 다시 잘못 풀지 않아요.
+    xml_text = re.sub(r"^<\?xml[^>]*\?>", "", xml_text)
     root = ET.fromstring(xml_text.encode("utf-8"))
     items = []
     for el in root.iter():

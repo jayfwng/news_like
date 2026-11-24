@@ -71,18 +71,12 @@ function timeAgo(iso) {
   return `${Math.round(h / 24)}일 전`;
 }
 
-const PALETTE = ["#e1306c", "#f77737", "#833ab4", "#405de6", "#0a9396", "#2a9d8f", "#e76f51", "#6d597a", "#1d3557", "#bc4749"];
-function colorFor(s) {
-  let h = 0;
-  for (const c of String(s)) h = (h * 31 + c.codePointAt(0)) >>> 0;
-  return PALETTE[h % PALETTE.length];
-}
 const TOPIC_GRADIENT = {
-  economy: "linear-gradient(135deg,#0f9b8e,#1d4ed8)", stock: "linear-gradient(135deg,#ef4444,#7c3aed)",
-  rate: "linear-gradient(135deg,#0ea5e9,#4338ca)", realestate: "linear-gradient(135deg,#f59e0b,#b45309)",
-  industry: "linear-gradient(135deg,#64748b,#0f172a)", politics: "linear-gradient(135deg,#6366f1,#1e3a8a)",
-  society: "linear-gradient(135deg,#14b8a6,#166534)", world: "linear-gradient(135deg,#06b6d4,#1e40af)",
-  tech: "linear-gradient(135deg,#a855f7,#db2777)", top: "linear-gradient(135deg,#f97316,#e11d48)",
+  economy: "linear-gradient(160deg,#1b2a4a,#0b1020)", stock: "linear-gradient(160deg,#3a1c2a,#0d0b14)",
+  rate: "linear-gradient(160deg,#16314f,#0a1222)", realestate: "linear-gradient(160deg,#3b2a18,#120d08)",
+  industry: "linear-gradient(160deg,#25303d,#0b0f14)", politics: "linear-gradient(160deg,#22264a,#0b0c18)",
+  society: "linear-gradient(160deg,#163a33,#08120f)", world: "linear-gradient(160deg,#123a4a,#071216)",
+  tech: "linear-gradient(160deg,#2e1f4a,#0e0a18)", top: "linear-gradient(160deg,#1f2a44,#0a0d16)",
 };
 const topicInfo = (id) => state.data?.topics.find((t) => t.id === id) || { id, name: id, emoji: "📰" };
 const mainTopic = (s) => s.topics.find((t) => t !== "top") || "top";
@@ -141,14 +135,19 @@ function storiesFor(topic) {
 function renderStoriesRow() {
   const d = state.data;
   $("#stories").innerHTML = d.topics.map((t) => {
-    const n = storiesFor(t.id).length;
-    if (!n) return "";
+    const list = storiesFor(t.id);
+    if (!list.length) return "";
     const seen = state.seenTopics[t.id] === d.generated_at;
+    const img = list.slice(0, 10).find((s) => s.image)?.image;
     return `<button class="story-btn ${seen ? "seen" : ""}" data-story="${t.id}">
-      <span class="story-ring"><span>${t.emoji}</span></span>
+      <span class="story-ring"><span>${img ? `<img src="${esc(img)}" alt="" referrerpolicy="no-referrer" data-fallback="1" data-emoji="${t.emoji}">` : t.emoji}</span></span>
       <span class="label">${esc(t.name)}</span>
     </button>`;
   }).join("");
+  $("#stories").querySelectorAll("img[data-emoji]").forEach((img) => {
+    const swap = () => img.replaceWith(img.dataset.emoji);
+    img.addEventListener("error", swap, { once: true });
+  });
 }
 
 function renderTodayTerms() {
@@ -169,40 +168,38 @@ function renderFilters() {
 }
 
 function postHTML(s) {
-  const t = mainTopic(s);
-  const info = topicInfo(t);
   const used = new Set();
   const others = s.outlets.filter((o) => o.name !== s.outlet);
   const n = s.outlets.length;
   const hot = n >= 4 || s.popular >= 1.5;
-  const tags = s.topics.filter((x) => x !== "top").slice(0, 2).map((x) => `<span class="tag">${esc(topicInfo(x).name)}</span>`).join("");
-  const placeholder = `<div class="placeholder" style="background:${TOPIC_GRADIENT[t] || TOPIC_GRADIENT.top}"><div><span class="emoji">${info.emoji}</span>${esc(s.title)}</div></div>`;
-  const media = s.image
-    ? `<img src="${esc(s.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-fallback="1">`
-    : placeholder;
+  const kicker = s.topics.filter((x) => x !== "top").slice(0, 2).map((x) => topicInfo(x).name).join(" · ");
   const saved = !!state.saved[s.id];
+  const badge = n >= 2 ? `${n}개 언론사` : s.popular ? "많이 본 뉴스" : "";
+  const media = s.image
+    ? `<a class="post-media" href="${esc(s.url)}" target="_blank" rel="noopener" data-open="${s.id}">
+        <img src="${esc(s.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-fallback="1">
+      </a>`
+    : "";
   return `<article class="post ${state.read.has(s.id) ? "read" : ""}" data-id="${s.id}">
     <div class="post-head">
-      <span class="avatar" style="background:${colorFor(s.outlet)}">${esc(s.outlet.slice(0, 1))}</span>
-      <div class="post-meta"><div class="outlet">${esc(s.outlet)}</div><div class="time">${timeAgo(s.published)}</div></div>
-      ${n >= 2 || s.popular ? `<span class="badge ${hot ? "hot" : ""}">${hot ? "🔥 " : ""}${n >= 2 ? `${n}곳 보도` : "많이 본 뉴스"}</span>` : ""}
+      <span class="avatar">${esc(s.outlet.slice(0, 1))}</span>
+      <div class="post-meta"><span class="outlet">${esc(s.outlet)}</span><span class="time">${timeAgo(s.published)}</span></div>
+      ${badge ? `<span class="badge ${hot ? "hot" : ""}">${badge}</span>` : ""}
     </div>
-    <a class="post-media" href="${esc(s.url)}" target="_blank" rel="noopener" data-open="${s.id}">
-      ${media}<template>${placeholder}</template>
-      <div class="tags">${tags}</div>
-    </a>
-    <div class="post-actions">
-      <button class="icon-btn ${saved ? "on" : ""}" data-save="${s.id}" aria-label="저장"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg></button>
-      <button class="icon-btn" data-share="${s.id}" aria-label="공유"><svg viewBox="0 0 24 24"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button>
-      <span class="grow"></span>
-      <a class="read-link" href="${esc(s.url)}" target="_blank" rel="noopener" data-open="${s.id}">원문 보기 ↗</a>
-    </div>
+    ${media}
     <div class="post-body">
+      ${kicker ? `<div class="post-kicker">${esc(kicker)}</div>` : ""}
       <h3 class="post-title">${withTerms(s.title, used)}</h3>
       <p class="post-summary ${s.summary ? "" : "empty"}">${withTerms(s.summary, used)}</p>
-      ${others.length ? `<button class="more-outlets" data-more="${s.id}">다른 언론사 ${others.length}곳 기사 보기</button>
-      <ul class="outlet-list" hidden>${others.map((o) => `<li><a href="${esc(o.url)}" target="_blank" rel="noopener" data-open="${s.id}"><b>${esc(o.name)}</b>${esc(o.title)}</a></li>`).join("")}</ul>` : ""}
     </div>
+    <div class="post-actions">
+      <button class="icon-btn ${saved ? "on" : ""}" data-save="${s.id}" aria-label="저장"><svg viewBox="0 0 24 24"><path d="M6.5 3.5h11v17l-5.5-3.8-5.5 3.8z"/></svg></button>
+      <button class="icon-btn" data-share="${s.id}" aria-label="공유"><svg viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>
+      <span class="grow"></span>
+      ${others.length ? `<button class="more-outlets" data-more="${s.id}">다른 언론사 ${others.length}</button>` : ""}
+      <a class="read-link" href="${esc(s.url)}" target="_blank" rel="noopener" data-open="${s.id}">원문 보기</a>
+    </div>
+    ${others.length ? `<ul class="outlet-list" hidden>${others.map((o) => `<li><a href="${esc(o.url)}" target="_blank" rel="noopener" data-open="${s.id}"><b>${esc(o.name)}</b>${esc(o.title)}</a></li>`).join("")}</ul>` : ""}
   </article>`;
 }
 
@@ -215,9 +212,9 @@ function renderFeed() {
 
 function wireImages(root) {
   root.querySelectorAll("img[data-fallback]").forEach((img) => {
-    const swap = () => { const tpl = img.nextElementSibling; if (tpl?.tagName === "TEMPLATE") img.replaceWith(tpl.content.cloneNode(true)); };
-    img.addEventListener("error", swap, { once: true });
-    if (img.complete && img.naturalWidth === 0 && img.src) swap();
+    const drop = () => (img.closest(".post-media") || img).remove();
+    img.addEventListener("error", drop, { once: true });
+    if (img.complete && img.naturalWidth === 0 && img.src) drop();
   });
 }
 
@@ -280,7 +277,7 @@ function showStory(i) {
   const used = new Set();
   $("#story-body").innerHTML = `<div class="story-bg" style="${bg}"></div>
     <div class="story-content">
-      <div class="src">${esc(s.outlet)} · ${timeAgo(s.published)}${s.outlets.length >= 2 ? ` · ${s.outlets.length}곳 보도` : ""}</div>
+      <div class="src">${esc(s.outlet)} · ${timeAgo(s.published)}${s.outlets.length >= 2 ? ` · ${s.outlets.length}개 언론사` : ""}</div>
       <h2>${withTerms(s.title, used)}</h2>
       ${s.summary ? `<p>${withTerms(s.summary, used)}</p>` : ""}
       <a class="go" href="${esc(s.url)}" target="_blank" rel="noopener">원문 보기 ↗</a>
@@ -381,6 +378,7 @@ function closeSheet() {
 function updateStar() {
   const on = !!state.words[sheetTerm];
   $("#sheet-star").textContent = on ? "★" : "☆";
+  $("#sheet-star").classList.toggle("on", on);
   $("#sheet-star").setAttribute("aria-label", on ? "단어장에서 빼기" : "단어장에 저장");
 }
 
@@ -494,7 +492,11 @@ document.addEventListener("click", (e) => {
   }
   if (d.save) return toggleSave(d.save);
   if (d.share) return share(d.share);
-  if (d.more) { el.nextElementSibling.hidden = !el.nextElementSibling.hidden; el.hidden = true; return; }
+  if (d.more) {
+    const list = el.closest(".post")?.querySelector(".outlet-list");
+    if (list) { list.hidden = !list.hidden; el.classList.toggle("open", !list.hidden); }
+    return;
+  }
   if (d.open) { state.read.add(d.open); saveRead(); el.closest(".post")?.classList.add("read"); return; }
   if (d.view) return showView(d.view);
 });
