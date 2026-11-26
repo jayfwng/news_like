@@ -82,7 +82,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 
 /* 경제 지표 */
 .market { display: flex; gap: 8px; overflow-x: auto; padding: 4px 20px 6px; scrollbar-width: none; scroll-snap-type: x proximity; scroll-padding: 0 20px; }
-.market::-webkit-scrollbar, .stories::-webkit-scrollbar, .filters::-webkit-scrollbar, .chips::-webkit-scrollbar { display: none; }
+.market::-webkit-scrollbar, .stories::-webkit-scrollbar, .filters::-webkit-scrollbar { display: none; }
 .tick {
   flex: none; min-width: 112px; padding: 11px 14px; border-radius: 14px; background: var(--surface);
   text-align: left; scroll-snap-align: start; transition: transform .12s;
@@ -107,16 +107,6 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .story-ring img { width: 100%; height: 100%; object-fit: cover; }
 .story-btn .label { font-size: 12px; font-weight: 500; color: var(--text-2); white-space: nowrap; }
 
-/* 오늘의 용어 */
-.today-terms { margin: 8px 20px 4px; padding: 16px; border-radius: var(--radius); background: var(--surface); }
-.today-terms h2 { font-size: 13px; font-weight: 700; color: var(--text-2); margin: 0 0 10px; }
-.chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; }
-.chip {
-  flex: none; padding: 7px 12px; border-radius: 10px; font-size: 14px; font-weight: 600;
-  background: var(--bg); color: var(--text);
-}
-.chip .n { color: var(--accent); font-weight: 700; margin-left: 5px; font-size: 12px; }
-
 /* 분야 탭 */
 .filters {
   position: sticky; top: calc(54px + env(safe-area-inset-top)); z-index: 15;
@@ -124,7 +114,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   background: var(--bg); border-bottom: 1px solid var(--line); scrollbar-width: none;
 }
 .filters .chip {
-  position: relative; background: none; border-radius: 0; padding: 12px 9px 11px; font-size: 15px; font-weight: 600; color: var(--text-3);
+  flex: none; position: relative; background: none; border-radius: 0; padding: 12px 9px 11px; font-size: 15px; font-weight: 600; color: var(--text-3);
 }
 .filters .chip.active { color: var(--text); }
 .filters .chip.active::after { content: ""; position: absolute; left: 9px; right: 9px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--text); }
@@ -141,9 +131,6 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .post-meta { min-width: 0; line-height: 1.3; display: flex; align-items: baseline; gap: 6px; }
 .post-meta .outlet { font-weight: 700; font-size: 14px; }
 .post-meta .time { font-size: 13px; color: var(--text-3); }
-.badge { margin-left: auto; flex: none; font-size: 12px; font-weight: 600; color: var(--text-3); display: inline-flex; align-items: center; gap: 5px; }
-.badge.hot { color: var(--accent); }
-.badge.hot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .post-media {
   position: relative; display: block; margin: 0 20px; aspect-ratio: 16 / 10; border-radius: var(--radius);
   background: var(--surface); overflow: hidden; isolation: isolate;

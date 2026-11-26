@@ -1,5 +1,5 @@
 // 앱 화면은 저장해 두고(오프라인 실행), 뉴스는 항상 새로 받되 안 되면 저장본을 보여줘요.
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL = [
   "./", "index.html", "css/app.css", "js/app.js", "js/glossary.js",
   "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png",

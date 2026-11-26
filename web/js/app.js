@@ -50,17 +50,6 @@ function withTerms(text, used = new Set()) {
   return out + esc(src.slice(last));
 }
 
-function termsIn(text) {
-  const found = new Set();
-  for (const m of String(text).matchAll(TERM_RE)) {
-    const k = m[0], after = text.slice(m.index + k.length);
-    if (NOT_FOLLOWED[k] && NOT_FOLLOWED[k].test(after)) continue;
-    if (ASCII_WORD.test(k[0]) && (ASCII_WORD.test(text[m.index - 1] || "") || ASCII_WORD.test(after[0] || ""))) continue;
-    found.add(DICT.get(k).term);
-  }
-  return found;
-}
-
 function timeAgo(iso) {
   if (!iso) return "";
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -105,7 +94,6 @@ function render() {
   $("#updated").textContent = d.generated_at ? `${timeAgo(d.generated_at)} 업데이트` : "";
   renderMarket(d.market || []);
   renderStoriesRow();
-  renderTodayTerms();
   renderFilters();
   renderFeed();
 }
@@ -150,16 +138,6 @@ function renderStoriesRow() {
   });
 }
 
-function renderTodayTerms() {
-  const counts = new Map();
-  for (const s of state.data.stories.slice(0, 150)) {
-    for (const t of termsIn(s.title + " " + s.summary)) counts.set(t, (counts.get(t) || 0) + 1);
-  }
-  const top = [...counts.entries()].filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1]).slice(0, 12);
-  $("#today-terms").hidden = !top.length;
-  $("#term-chips").innerHTML = top.map(([t, n]) => `<button class="chip" data-term="${esc(t)}">${esc(t)}<span class="n">${n}</span></button>`).join("");
-}
-
 function renderFilters() {
   const tabs = [{ id: "all", name: "전체" }, ...state.data.topics.filter((t) => t.id !== "top")];
   $("#filters").innerHTML = tabs.map((t) =>
@@ -170,11 +148,8 @@ function renderFilters() {
 function postHTML(s) {
   const used = new Set();
   const others = s.outlets.filter((o) => o.name !== s.outlet);
-  const n = s.outlets.length;
-  const hot = n >= 4 || s.popular >= 1.5;
   const kicker = s.topics.filter((x) => x !== "top").slice(0, 2).map((x) => topicInfo(x).name).join(" · ");
   const saved = !!state.saved[s.id];
-  const badge = n >= 2 ? `${n}개 언론사` : s.popular ? "많이 본 뉴스" : "";
   const media = s.image
     ? `<a class="post-media" href="${esc(s.url)}" target="_blank" rel="noopener" data-open="${s.id}">
         <img src="${esc(s.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-fallback="1">
@@ -184,7 +159,6 @@ function postHTML(s) {
     <div class="post-head">
       <span class="avatar">${esc(s.outlet.slice(0, 1))}</span>
       <div class="post-meta"><span class="outlet">${esc(s.outlet)}</span><span class="time">${timeAgo(s.published)}</span></div>
-      ${badge ? `<span class="badge ${hot ? "hot" : ""}">${badge}</span>` : ""}
     </div>
     ${media}
     <div class="post-body">
